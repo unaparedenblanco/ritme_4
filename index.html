@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TROBA EL RITME</title>
+
+<style>
+
+:root{
+    color-scheme:light;
+    --page-bg:#eef5ff;
+    --page-text:#27364a;
+    --heading:#0D47A1;
+    --subheading:#555;
+    --control-bg:#fff;
+    --control-text:#1e293b;
+    --card-bg:#fff;
+    --card-border:#ccc;
+    --note-color:#000;
+    --correct-bg:#c8e6c9;
+    --correct-border:#2e7d32;
+    --wrong-bg:#ffcdd2;
+    --wrong-border:#c62828;
+}
+
+body.mode-fosc{
+    color-scheme:dark;
+    --page-bg:#101827;
+    --page-text:#e5edf7;
+    --heading:#9fc5ff;
+    --subheading:#b8c6d9;
+    --control-bg:#1d2b3f;
+    --control-text:#eff5ff;
+    --card-bg:#182538;
+    --card-border:#53657e;
+    --note-color:#f4f6fa;
+    --correct-bg:#163b2f;
+    --correct-border:#45a878;
+    --wrong-bg:#4a2730;
+    --wrong-border:#e77786;
+}
+
+body{
+    position:relative;
+    font-family:Arial,sans-serif;
+    background:var(--page-bg);
+    color:var(--page-text);
+    text-align:center;
+    padding:20px;
+    margin:0;
+}
+
+h1{
+    color:var(--heading);
+    margin-bottom:5px;
+}
+
+.tema-comptador{
+    position:absolute;
+    top:12px;
+    right:12px;
+    z-index:2;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:4px;
+}
+
+#canviarTema{
+    margin:0;
+}
+
+h2{
+    color:var(--subheading);
+    font-weight:normal;
+    margin-top:0;
+}
+
+select,
+button{
+    padding:10px 15px;
+    font-size:18px;
+    border-radius:8px;
+    margin:10px;
+    border:1px solid var(--card-border);
+    background:var(--control-bg);
+    color:var(--control-text);
+}
+
+.control-volum{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin:4px auto 18px;
+    color:var(--page-text);
+    font-size:16px;
+}
+
+.control-volum input{
+    width:190px;
+    accent-color:var(--heading);
+    cursor:pointer;
+}
+
+#valorVolum{
+    min-width:42px;
+    font-variant-numeric:tabular-nums;
+}
+
+#comptador{
+    display:inline-block;
+    margin:0;
+    padding:8px 14px;
+    border:1px solid var(--card-border);
+    border-radius:999px;
+    background:var(--control-bg);
+    color:var(--page-text);
+    font-weight:bold;
+}
+
+button{
+    cursor:pointer;
+}
+
+.boto-repetir{
+    display:block;
+    margin:0 auto 16px;
+}
+
+#opcions{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:20px;
+    max-width:900px;
+    margin:auto;
+}
+
+.opcio{
+    background:var(--card-bg);
+    border:3px solid var(--card-border);
+    border-radius:15px;
+    padding:20px;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.opcio:hover{
+    transform:scale(1.03);
+}
+
+.ritme{
+    font-size:60px;
+    color:var(--note-color);
+}
+
+.figura-unida{
+    display:inline-block;
+    height:60px;
+    width:auto;
+    vertical-align:middle;
+    color:var(--note-color);
+}
+
+.correcta{
+    background:var(--correct-bg);
+    border-color:var(--correct-border);
+}
+
+.incorrecta{
+    background:var(--wrong-bg);
+    border-color:var(--wrong-border);
+}
+
+#resultat{
+    margin-top:20px;
+    font-size:24px;
+    font-weight:bold;
+}
+
+@media(max-width:700px){
+
+#opcions{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+}
+
+.opcio{
+    padding:12px;
+}
+
+.ritme{
+    font-size:40px;
+}
+
+.figura-unida{
+    height:46px;
+}
+
+h1{
+    margin-top:90px;
+}
+
+}
+
+</style>
+</head>
+<body class="mode-fosc">
+
+<div class="tema-comptador">
+    <button
+        id="canviarTema"
+        type="button"
+        onclick="canviarTema()"
+        aria-label="Canvia al mode de dia"
+    >
+    ☀️ Mode de dia
+    </button>
+    <div id="comptador" aria-live="polite">Encerts: 0</div>
+</div>
+
+<h1>TROBA EL RITME</h1>
+<h2>Miquel Castellà</h2>
+
+<select id="nivell">
+    <option value="1">Nivell 1 · Negra i silenci</option>
+    <option value="2">Nivell 2 · Negra i corxeres</option>
+    <option value="3">Nivell 3 · Negra, silenci i corxeres</option>
+    <option value="4">Nivell 4 · Negra, corxeres i semicorxeres</option>
+</select>
+
+<button onclick="nouExercici()">
+🔊 Escolta el ritme
+</button>
+
+<div class="control-volum">
+    <label for="volum">Volum</label>
+    <input
+        id="volum"
+        type="range"
+        min="0"
+        max="100"
+        value="100"
+        aria-label="Volum de reproducció"
+    >
+    <span id="valorVolum" aria-live="polite">100%</span>
+</div>
+
+<button
+    id="repetirRitme"
+    class="boto-repetir"
+    type="button"
+    onclick="repetirRitme()"
+>
+🔁 Torna a sentir el ritme
+</button>
+
+<div id="opcions"></div>
+<div id="resultat"></div>
+
+<script>
+
+const ritmes={
+
+1:[
+"N R N R",
+"R N R N",
+"N N R N",
+"R R N N"
+],
+
+2:[
+"N E N E",
+"E N E N",
+"N N E E",
+"E E N N"
+],
+
+3:[
+"N E R N",
+"R N E N",
+"N R E E",
+"E N R N"
+],
+
+4:[
+"N S N E",
+"S N E N",
+"N E S N",
+"S S N N"
+]
+
+};
+
+let correcta="";
+let guanyGeneralActiu=null;
+let encerts=0;
+
+
+function actualitzarVolum(){
+
+    const control=
+        document.getElementById("volum");
+
+    const percentatge=
+        Number(control.value);
+
+    document.getElementById("valorVolum")
+        .textContent=percentatge+"%";
+
+    if(guanyGeneralActiu){
+
+        guanyGeneralActiu.gain
+            .setTargetAtTime(
+                (percentatge/100)*1.5,
+                guanyGeneralActiu.context.currentTime,
+                0.015
+            );
+
+    }
+
+}
+
+
+document
+    .getElementById("volum")
+    .addEventListener("input",actualitzarVolum);
+
+
+function canviarTema(){
+
+    const fosc=
+        document.body.classList.toggle("mode-fosc");
+
+    const boto=
+        document.getElementById("canviarTema");
+
+    boto.textContent=
+        fosc ? "☀️ Mode de dia" : "🌙 Mode fosc";
+
+    boto.setAttribute(
+        "aria-label",
+        fosc ? "Canvia al mode de dia" : "Canvia al mode fosc"
+    );
+
+}
+
+
+function simbol(token){
+
+    if(token==="N") return "♩";
+
+    if(token==="R") return "𝄽";
+
+    /* Dues corxeres amb una barra comuna */
+    if(token==="E") return `
+        <svg class="figura-unida" viewBox="0 0 82 70"
+             role="img" aria-label="Dues corxeres unides">
+            <g fill="currentColor">
+                <ellipse cx="22" cy="55" rx="9" ry="6"
+                         transform="rotate(-25 22 55)"/>
+                <ellipse cx="58" cy="55" rx="9" ry="6"
+                         transform="rotate(-25 58 55)"/>
+            </g>
+            <g fill="none" stroke="currentColor" stroke-width="4"
+               stroke-linecap="round">
+                <path d="M30 52V14 M66 52V18 M30 14L66 18"/>
+            </g>
+        </svg>`;
+
+    /* Quatre semicorxeres amb dues barres comunes */
+    if(token==="S") return `
+        <svg class="figura-unida" viewBox="0 0 116 70"
+             role="img" aria-label="Quatre semicorxeres unides">
+            <g fill="currentColor">
+                <ellipse cx="16" cy="55" rx="8" ry="6"
+                         transform="rotate(-25 16 55)"/>
+                <ellipse cx="43" cy="55" rx="8" ry="6"
+                         transform="rotate(-25 43 55)"/>
+                <ellipse cx="70" cy="55" rx="8" ry="6"
+                         transform="rotate(-25 70 55)"/>
+                <ellipse cx="97" cy="55" rx="8" ry="6"
+                         transform="rotate(-25 97 55)"/>
+            </g>
+            <g fill="none" stroke="currentColor" stroke-width="4"
+               stroke-linecap="round">
+                <path d="M24 52V14 M51 52V15 M78 52V16 M105 52V18
+                         M24 14L105 18 M24 22L105 26"/>
+            </g>
+        </svg>`;
+
+}
+
+
+function convertir(text){
+
+    return text
+        .split(" ")
+        .map(simbol)
+        .join(" ");
+
+}
+
+
+function nouExercici(){
+
+    document
+        .getElementById("resultat")
+        .innerHTML="";
+
+    let nivell=
+        document
+        .getElementById("nivell")
+        .value;
+
+    let llista=
+        ritmes[nivell];
+
+    correcta=
+        llista[
+        Math.floor(
+        Math.random()
+        * llista.length
+        )];
+
+    let opcions=[correcta];
+
+    while(opcions.length<4){
+
+        let candidat=
+            llista[
+            Math.floor(
+            Math.random()
+            * llista.length
+            )];
+
+        if(!opcions.includes(candidat)){
+
+            opcions.push(
+                candidat
+            );
+
+        }
+
+    }
+
+    opcions.sort(
+        ()=>Math.random()-0.5
+    );
+
+    mostrarOpcions(opcions);
+
+    reproduirRitme(
+        correcta
+    );
+
+}
+
+
+function repetirRitme(){
+
+    if(correcta){
+
+        reproduirRitme(correcta);
+
+    }
+
+}
+
+
+function mostrarOpcions(opcions){
+
+    let html="";
+
+    opcions.forEach(opcio=>{
+
+        html+=`
+        <div class="opcio"
+             onclick="comprovar(this,'${opcio}')">
+
+            <div class="ritme">
+                ${convertir(opcio)}
+            </div>
+
+        </div>
+        `;
+
+    });
+
+    document
+    .getElementById("opcions")
+    .innerHTML=html;
+
+}
+
+
+function comprovar(
+
+    element,
+    resposta
+
+){
+
+    document
+        .querySelectorAll(
+            ".opcio"
+        )
+        .forEach(
+            o=>o.onclick=null
+        );
+
+    if(
+        resposta===correcta
+    ){
+
+        element
+        .classList
+        .add(
+            "correcta"
+        );
+
+        document
+        .getElementById(
+            "resultat"
+        )
+        .innerHTML=
+        "✅ Correcte!";
+
+        encerts++;
+        document
+            .getElementById("comptador")
+            .textContent="Encerts: "+encerts;
+
+    }
+
+    else{
+
+        element
+        .classList
+        .add(
+            "incorrecta"
+        );
+
+        document
+        .getElementById(
+            "resultat"
+        )
+        .innerHTML=
+        "❌ Incorrecte";
+
+    }
+
+}
+
+
+/* SO TIPUS MARIMBA */
+
+function nota(
+
+    ctx,
+    inici,
+    durada,
+    freq,
+    volum
+
+){
+
+    const osc=
+        ctx.createOscillator();
+
+    const gain=
+        ctx.createGain();
+
+    osc.type=
+        "sine";
+
+    osc.frequency.value=
+        freq;
+
+    gain.gain
+        .setValueAtTime(
+            0.0001,
+            inici
+        );
+
+    gain.gain
+        .linearRampToValueAtTime(
+            volum,
+            inici+0.01
+        );
+
+    gain.gain
+        .exponentialRampToValueAtTime(
+            0.0001,
+            inici+durada
+        );
+
+    osc.connect(gain);
+
+    gain.connect(
+        guanyGeneralActiu || ctx.destination
+    );
+
+    osc.start(inici);
+
+    osc.stop(
+        inici+durada
+    );
+
+}
+
+
+function sorollPercussiu(
+
+    ctx,
+    inici,
+    durada,
+    volum,
+    tipusFiltre,
+    frequencia
+
+){
+
+    const buffer=
+        ctx.createBuffer(
+            1,
+            Math.ceil(ctx.sampleRate*durada),
+            ctx.sampleRate
+        );
+
+    const mostres=
+        buffer.getChannelData(0);
+
+    for(let i=0;i<mostres.length;i++){
+
+        mostres[i]=Math.random()*2-1;
+
+    }
+
+    const font=
+        ctx.createBufferSource();
+
+    const filtre=
+        ctx.createBiquadFilter();
+
+    const gain=
+        ctx.createGain();
+
+    font.buffer=buffer;
+    filtre.type=tipusFiltre;
+    filtre.frequency.value=frequencia;
+    filtre.Q.value=0.8;
+
+    gain.gain.setValueAtTime(0.0001,inici);
+    gain.gain.linearRampToValueAtTime(volum,inici+0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001,inici+durada);
+
+    font.connect(filtre);
+    filtre.connect(gain);
+    gain.connect(guanyGeneralActiu || ctx.destination);
+
+    font.start(inici);
+    font.stop(inici+durada);
+
+}
+
+
+function soClaqueta(ctx,inici,accentat){
+
+    sorollPercussiu(
+        ctx,
+        inici,
+        0.025,
+        accentat ? 0.42 : 0.14,
+        "highpass",
+        2500
+    );
+
+}
+
+
+function soCaixa(ctx,inici){
+
+    sorollPercussiu(
+        ctx,
+        inici,
+        0.12,
+        0.32,
+        "bandpass",
+        1700
+    );
+
+    nota(
+        ctx,
+        inici,
+        0.08,
+        180,
+        0.06
+    );
+
+}
+
+
+/* PULSACIÓ */
+
+function pulsacio(
+
+    ctx,
+    inici,
+    polsos,
+    duradaNegra
+
+){
+
+    for(
+
+        let i=0;
+        i<polsos;
+        i++
+
+    ){
+
+        soClaqueta(
+            ctx,
+            inici+(i*duradaNegra),
+            i===0
+        );
+
+    }
+
+}
+
+
+/* REPRODUCCIÓ */
+
+function reproduirRitme(
+
+    patró
+
+){
+
+    const ctx=
+        new(
+        window.AudioContext
+        ||
+        window.webkitAudioContext
+        )();
+
+    guanyGeneralActiu=
+        ctx.createGain();
+
+    guanyGeneralActiu.gain.value=
+        (Number(document.getElementById("volum").value)/100)*1.5;
+
+    const limitador=
+        ctx.createDynamicsCompressor();
+
+    limitador.threshold.value=-6;
+    limitador.knee.value=3;
+    limitador.ratio.value=10;
+    limitador.attack.value=0.003;
+    limitador.release.value=0.18;
+
+    guanyGeneralActiu.connect(limitador);
+    limitador.connect(ctx.destination);
+
+    const bpm=60;
+    const duradaNegra=60/bpm;
+
+    let temps=
+        ctx.currentTime;
+
+    pulsacio(
+
+        ctx,
+
+        temps,
+
+        4,
+
+        duradaNegra
+
+    );
+
+    patró
+    .split(" ")
+    .forEach(figura=>{
+
+        if(
+            figura==="N"
+        ){
+
+            soCaixa(ctx,temps);
+
+            nota(
+
+                ctx,
+
+                temps,
+
+                0.18,
+
+                523,
+
+                0.2
+
+            );
+
+            temps+=duradaNegra;
+
+        }
+
+        else if(
+            figura==="R"
+        ){
+
+            temps+=duradaNegra;
+
+        }
+
+        else if(
+            figura==="E"
+        ){
+
+            soCaixa(ctx,temps);
+
+            nota(
+
+                ctx,
+
+                temps,
+
+                0.08,
+
+                523,
+
+                0.2
+
+            );
+
+            temps+=duradaNegra/2;
+
+            soCaixa(ctx,temps);
+
+            nota(
+
+                ctx,
+
+                temps,
+
+                0.08,
+
+                523,
+
+                0.2
+
+            );
+
+            temps+=duradaNegra/2;
+
+        }
+
+        else if(
+            figura==="S"
+        ){
+
+            for(
+
+                let i=0;
+                i<4;
+                i++
+
+            ){
+
+                soCaixa(ctx,temps);
+
+                nota(
+
+                    ctx,
+
+                    temps,
+
+                    0.04,
+
+                    523,
+
+                    0.18
+
+                );
+
+                temps+=duradaNegra/4;
+
+            }
+
+        }
+
+    });
+
+}
+
+
+nouExercici();
+
+</script>
+
+</body>
+</html>
